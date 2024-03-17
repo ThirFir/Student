@@ -18,15 +18,33 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import com.example.ggwave.databinding.ActivityMainBinding;
 
 import java.nio.ShortBuffer;
+import java.util.concurrent.TimeUnit;
+
+import okhttp3.OkHttpClient;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity {
+    public ActivityMainBinding binding;
 
     private String kMessageToSend = "Hello Android!";
     private CapturingThread mCapturingThread;
     private PlaybackThread mPlaybackThread;
     private static final int REQUEST_RECORD_AUDIO = 13;
+
+    // TODO : BASE URL
+    private static final String BASE_URL = "http://";
+    private OkHttpClient client;
+    private Retrofit retrofit;
+    private ServerApi api;
 
     // Native interface:
     private native void initNative();
@@ -38,11 +56,35 @@ public class MainActivity extends AppCompatActivity {
         String message = new String(c_message);
         Log.v("ggwave", "Received message: " + message);
 
+        if(api != null) {
+            api.postDecodedKey(new KeyReq(message)).enqueue(new Callback<AttendanceDTO>() {
+                @Override
+                public void onResponse(Call<AttendanceDTO> call, Response<AttendanceDTO> response) {
+                    if (response.isSuccessful()) {
+                        if (response.body() != null) {
+                            if (response.body().getIsAttend())
+                                Toast.makeText(MainActivity.this, "출석 처리되었습니다.", Toast.LENGTH_SHORT).show();
+                            else
+                                Toast.makeText(MainActivity.this, "출석 실패하였습니다.", Toast.LENGTH_SHORT).show();
+                            Log.d("ggwave", "Response: " + response.body().getIsAttend());
+                        }
+                    } else {
+                        Log.d("ggwave", "Response: " + response.code());
+                    }
+                }
+
+                @Override
+                public void onFailure(Call<AttendanceDTO> call, Throwable t) {
+                    Log.d("ggwave", "Failure: " + t.getMessage());
+                    Toast.makeText(MainActivity.this, "출석 실패하였습니다.", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                TextView textView = (TextView) findViewById(R.id.textViewReceived);
-                textView.setText("Received: " + message);
+                binding.textViewReceived.setText(message);
             }
         });
     }
@@ -58,8 +100,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onCompletion() {
                 mPlaybackThread.stopPlayback();
-                ((Button) findViewById(R.id.buttonTogglePlayback)).setText("Send Message");
-                ((TextView) findViewById(R.id.textViewStatusOut)).setText("Status: Idle");
             }
         });
     }
@@ -67,10 +107,12 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
         System.loadLibrary("test-cpp");
         initNative();
+        //initRetrofitApi();
 
         mCapturingThread = new CapturingThread(new AudioDataReceivedListener() {
             @Override
@@ -80,50 +122,24 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        Button buttonToggleCapture = (Button) findViewById(R.id.buttonToggleCapture);
-        buttonToggleCapture.setOnClickListener( new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!mCapturingThread.capturing()) {
-                    startAudioCapturingSafe();
-                } else {
-                    mCapturingThread.stopCapturing();
-                }
+        binding.buttonToggleCapture.setOnClickListener(v -> {
+            if (!mCapturingThread.capturing()) {
+                startAudioCapturingSafe();
+            } else {
+                mCapturingThread.stopCapturing();
+            }
 
-                if (mCapturingThread.capturing()) {
-                    ((Button) findViewById(R.id.buttonToggleCapture)).setText("Stop Capturing");
-                    ((TextView) findViewById(R.id.textViewStatusInp)).setText("Status: Capturing");
-                    ((TextView) findViewById(R.id.textViewReceived)).setText("Received:");
-                } else {
-                    ((Button) findViewById(R.id.buttonToggleCapture)).setText("Start Capturing");
-                    ((TextView) findViewById(R.id.textViewStatusInp)).setText("Status: Idle");
-                    ((TextView) findViewById(R.id.textViewReceived)).setText("Received:");
-                }
+            if (mCapturingThread.capturing()) {
+                binding.buttonToggleCapture.setText("중지");
+                binding.textViewStatusInp.setText("Status: Capturing");
+                binding.textViewReceived.setText("");
+            } else {
+                binding.buttonToggleCapture.setText("출석");
+                binding.textViewStatusInp.setText("Status: Idle");
+                binding.textViewReceived.setText("");
             }
         });
 
-        ((TextView) findViewById(R.id.textViewMessageToSend)).setText("Message to send: " + kMessageToSend);
-
-        Button buttonTogglePlayback = (Button) findViewById(R.id.buttonTogglePlayback);
-        buttonTogglePlayback.setOnClickListener( new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (mPlaybackThread == null || !mPlaybackThread.playing()) {
-                    sendMessage(kMessageToSend);
-                    mPlaybackThread.startPlayback();
-                } else {
-                    mPlaybackThread.stopPlayback();
-                }
-
-                if (mPlaybackThread.playing()) {
-                    ((Button) findViewById(R.id.buttonTogglePlayback)).setText("Stop Playing");
-                    ((TextView) findViewById(R.id.textViewStatusOut)).setText("Status: Playing audio");
-                } else {
-                    ((Button) findViewById(R.id.buttonTogglePlayback)).setText("Send Message");
-                    ((TextView) findViewById(R.id.textViewStatusOut)).setText("Status: Idle");
-                }
-            }
-        });
     }
 
     private void startAudioCapturingSafe() {
@@ -165,6 +181,19 @@ public class MainActivity extends AppCompatActivity {
                 grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             mCapturingThread.stopCapturing();
         }
+    }
+
+    private void initRetrofitApi() {
+        client = new OkHttpClient.Builder().connectTimeout(10, TimeUnit.SECONDS)
+                .readTimeout(10, TimeUnit.SECONDS)
+                .writeTimeout(10, TimeUnit.SECONDS)
+                .build();
+        retrofit = new Retrofit.Builder()
+                .client(client)
+                .addConverterFactory(GsonConverterFactory.create())
+                .baseUrl(BASE_URL)
+                .build();
+        api = retrofit.create(ServerApi.class);
     }
 }
 
