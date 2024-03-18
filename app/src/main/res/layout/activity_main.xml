@@ -40,9 +40,9 @@
         android:id="@+id/textViewReceived"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:layout_constraintStart_toEndOf="@id/textViewReceived"
-        app:layout_constraintTop_toTopOf="@id/textViewReceived"
-        app:layout_constraintBottom_toBottomOf="@id/textViewReceived"
+        app:layout_constraintStart_toEndOf="@id/textViewReceived2"
+        app:layout_constraintTop_toTopOf="@id/textViewReceived2"
+        app:layout_constraintBottom_toBottomOf="@id/textViewReceived2"
         app:layout_goneMarginStart="4dp"
         android:layout_marginStart="4dp" />
 
