@@ -1,11 +1,5 @@
 package com.example.ggwave;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.media.AudioFormat;
@@ -16,12 +10,17 @@ import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
-import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.example.ggwave.databinding.ActivityMainBinding;
 
+import java.io.IOException;
 import java.nio.ShortBuffer;
 import java.util.concurrent.TimeUnit;
 
@@ -34,9 +33,11 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity {
     public ActivityMainBinding binding;
+    private String studentId = "20191111";
 
     private String kMessageToSend = "Hello Android!";
     private CapturingThread mCapturingThread;
+    private RtNoiseReducer rtNoiseReducer;
     private PlaybackThread mPlaybackThread;
     private static final int REQUEST_RECORD_AUDIO = 13;
 
@@ -53,20 +54,44 @@ public class MainActivity extends AppCompatActivity {
 
     // Native callbacks:
     private void onNativeReceivedMessage(byte c_message[]) {
+
+        /*double[] doubleArray = convertByteArrayToDouble(c_message);
+        double[] se_out = rtNoiseReducer.audioSE(doubleArray);
+        byte[] byteArray = convertDoubleArrayToByteArray(se_out);
+        String message = new String(byteArray);
+        Log.v("ggwave", "Received message: " + message);*/
         String message = new String(c_message);
-        Log.v("ggwave", "Received message: " + message);
 
         if(api != null) {
-            api.postDecodedKey(new KeyReq(message)).enqueue(new Callback<AttendanceDTO>() {
+            api.postDecodedKey(new KeyReq(message, studentId)).enqueue(new Callback<AttendanceDTO>() {
                 @Override
-                public void onResponse(Call<AttendanceDTO> call, Response<AttendanceDTO> response) {
+                public void onResponse(@NonNull Call<AttendanceDTO> call, @NonNull Response<AttendanceDTO> response) {
                     if (response.isSuccessful()) {
                         if (response.body() != null) {
-                            if (response.body().getIsAttend())
-                                Toast.makeText(MainActivity.this, "출석 처리되었습니다.", Toast.LENGTH_SHORT).show();
+                            if (response.body().getLecture() != null) {
+                                AttendanceDTO attendance = response.body();
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText(MainActivity.this, "출석 처리되었습니다.", Toast.LENGTH_SHORT).show();
+                                        binding.lottieReceiving.setVisibility(View.INVISIBLE);
+                                        binding.lottieChecked.setVisibility(View.VISIBLE);
+                                        binding.lottieChecked.playAnimation();
+
+                                        binding.tvClass.setText(attendance.getLecture());
+                                        binding.tvDate.setText(attendance.getAttendedAt());
+                                        binding.tvIsChecked.setText("Y");
+                                    }
+                                });
+                            }
                             else
-                                Toast.makeText(MainActivity.this, "출석 실패하였습니다.", Toast.LENGTH_SHORT).show();
-                            Log.d("ggwave", "Response: " + response.body().getIsAttend());
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText(MainActivity.this, "출석 실패하였습니다.", Toast.LENGTH_SHORT).show();
+                                        binding.tvIsChecked.setText("N");
+                                    }
+                                });
                         }
                     } else {
                         Log.d("ggwave", "Response: " + response.code());
@@ -79,11 +104,24 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(MainActivity.this, "출석 실패하였습니다.", Toast.LENGTH_SHORT).show();
                 }
             });
+        } else {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Log.d("ggwave", "api is null");
+                    binding.lottieReceiving.setVisibility(View.INVISIBLE);
+                    binding.lottieChecked.setVisibility(View.VISIBLE);
+                    binding.lottieChecked.playAnimation();
+
+                }
+            });
         }
 
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                mCapturingThread.stopCapturing();
+                binding.textViewStatusInp.setText("Status: Idle");
                 binding.textViewReceived.setText(message);
             }
         });
@@ -112,6 +150,7 @@ public class MainActivity extends AppCompatActivity {
 
         System.loadLibrary("test-cpp");
         initNative();
+        initRTNR();
         //initRetrofitApi();
 
         mCapturingThread = new CapturingThread(new AudioDataReceivedListener() {
@@ -122,24 +161,21 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        binding.buttonToggleCapture.setOnClickListener(v -> {
+        binding.lottieReceiving.setOnClickListener(v -> {
             if (!mCapturingThread.capturing()) {
                 startAudioCapturingSafe();
-            } else {
-                mCapturingThread.stopCapturing();
-            }
-
-            if (mCapturingThread.capturing()) {
-                binding.buttonToggleCapture.setText("중지");
+                binding.lottieReceiving.playAnimation();
+                binding.lottieReceiving.setProgress(0.33f);
                 binding.textViewStatusInp.setText("Status: Capturing");
                 binding.textViewReceived.setText("");
             } else {
-                binding.buttonToggleCapture.setText("출석");
+                mCapturingThread.stopCapturing();
+                binding.lottieReceiving.cancelAnimation();
+                binding.lottieReceiving.setProgress(0.33f);
                 binding.textViewStatusInp.setText("Status: Idle");
                 binding.textViewReceived.setText("");
             }
         });
-
     }
 
     private void startAudioCapturingSafe() {
@@ -194,6 +230,61 @@ public class MainActivity extends AppCompatActivity {
                 .baseUrl(BASE_URL)
                 .build();
         api = retrofit.create(ServerApi.class);
+    }
+
+    private double[] convertByteArrayToDouble(byte[] byteArray) {
+        // 바이트 배열의 길이가 짝수가 아니거나 바이트 배열이 null이면 변환할 수 없음
+        if (byteArray == null || byteArray.length % 2 != 0) {
+            return null;
+        }
+
+        int shortArrayLength = byteArray.length / 2;
+        short[] shortArray = new short[shortArrayLength];
+
+        // 바이트 배열을 short 배열로 변환
+        for (int i = 0; i < shortArrayLength; i++) {
+            shortArray[i] = (short) (((byteArray[i * 2 + 1] & 0xFF) << 8) | (byteArray[i * 2] & 0xFF));
+        }
+
+        // short 배열을 double 배열로 변환
+        double[] doubleArray = new double[shortArrayLength];
+        for (int i = 0; i < shortArrayLength; i++) {
+            doubleArray[i] = shortArray[i];
+        }
+
+        return doubleArray;
+    }
+
+    void initRTNR(){
+        try {
+            rtNoiseReducer = new RtNoiseReducer(this);
+        } catch (IOException e) {
+            Log.d("class", "Failed to create noise reduction");
+        }
+    }
+
+    public static byte[] convertDoubleArrayToByteArray(double[] doubleArray) {
+        if (doubleArray == null) {
+            return null;
+        }
+
+        int shortArrayLength = doubleArray.length;
+        short[] shortArray = new short[shortArrayLength];
+
+        // double 배열을 short 배열로 변환
+        for (int i = 0; i < shortArrayLength; i++) {
+            shortArray[i] = (short) doubleArray[i];
+        }
+
+        // short 배열을 바이트 배열로 변환
+        byte[] byteArray = new byte[shortArrayLength * 2];
+        for (int i = 0; i < shortArrayLength; i++) {
+            // little-endian 형태로 short 값을 바이트 배열로 변환
+            byteArray[i * 2] = (byte) (shortArray[i] & 0xFF);
+            byteArray[i * 2 + 1] = (byte) ((shortArray[i] >> 8) & 0xFF);
+        }
+
+        return byteArray;
     }
 }
 

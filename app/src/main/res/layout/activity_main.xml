@@ -6,26 +6,156 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-
-    <Button
-        android:id="@+id/buttonToggleCapture"
-        style="?attr/materialButtonOutlinedStyle"
-        android:layout_width="100dp"
-        android:layout_height="wrap_content"
-        android:text="출석"
-        android:layout_marginTop="30dp"
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/lottie_study"
+        android:layout_width="1000dp"
+        android:layout_height="500dp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textViewReceived2" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:lottie_autoPlay="true"
+        app:lottie_loop="true"
+        android:layout_marginBottom="700dp"
+        app:lottie_rawRes="@raw/study" />
+
+    <View
+        android:id="@+id/view1"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginBottom="73dp"
+        app:layout_constraintBottom_toBottomOf="@id/guideline"
+        android:background="#B1B1B1" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toTopOf="@id/view1"
+        app:layout_constraintBottom_toBottomOf="@id/view2"
+        android:background="#CBDFFF" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toBottomOf="@id/lottie_study" />
+    
+    <TextView
+        android:id="@+id/text_class"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="12dp"
+        android:layout_marginEnd="12dp"
+        app:layout_constraintEnd_toStartOf="@+id/text_date"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintHorizontal_chainStyle="spread"
+        app:layout_constraintTop_toBottomOf="@id/view1"
+        android:text="강의명" />
+
+    <TextView
+        android:id="@+id/text_date"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toBottomOf="@id/text_class"
+        app:layout_constraintEnd_toStartOf="@+id/text_is_checked"
+        app:layout_constraintStart_toEndOf="@+id/text_class"
+        app:layout_constraintTop_toTopOf="@id/text_class"
+        android:text="날짜" />
+
+    <TextView
+        android:id="@+id/text_is_checked"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toBottomOf="@id/text_class"
+        app:layout_constraintEnd_toStartOf="@+id/text_checked_time"
+        app:layout_constraintStart_toEndOf="@+id/text_date"
+        app:layout_constraintTop_toTopOf="@id/text_class"
+        android:text="출석 여부" />
+
+    <TextView
+        android:id="@+id/text_checked_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toBottomOf="@id/text_class"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/text_is_checked"
+        app:layout_constraintTop_toTopOf="@id/text_class"
+        android:text="출석 시간" />
+
+    <TextView
+        android:id="@+id/tv_class"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="16sp"
+        tools:text="졸업설계"
+        android:layout_marginTop="12dp"
+        app:layout_constraintTop_toBottomOf="@id/view2"
+        app:layout_constraintStart_toStartOf="@id/text_class"
+        app:layout_constraintEnd_toEndOf="@id/text_class" />
+
+    <TextView
+        android:id="@+id/tv_date"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="16sp"
+        tools:text="2021-06-01"
+        app:layout_constraintTop_toTopOf="@id/tv_class"
+        app:layout_constraintBottom_toBottomOf="@id/tv_class"
+        app:layout_constraintStart_toStartOf="@id/text_date"
+        app:layout_constraintEnd_toEndOf="@id/text_date" />
+
+    <TextView
+        android:id="@+id/tv_is_checked"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="16sp"
+        tools:text="출석"
+        app:layout_constraintTop_toTopOf="@id/tv_class"
+        app:layout_constraintBottom_toBottomOf="@id/tv_class"
+        app:layout_constraintStart_toStartOf="@id/text_is_checked"
+        app:layout_constraintEnd_toEndOf="@id/text_is_checked" />
+
+    <TextView
+        android:id="@+id/tv_checked_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="16sp"
+        tools:text="10:01:32"
+        app:layout_constraintTop_toTopOf="@id/tv_class"
+        app:layout_constraintBottom_toBottomOf="@id/tv_class"
+        app:layout_constraintStart_toStartOf="@id/text_checked_time"
+        app:layout_constraintEnd_toEndOf="@id/text_checked_time" />
+
+    <View
+        android:id="@+id/view2"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="12dp"
+        app:layout_constraintTop_toBottomOf="@id/text_class"
+        android:background="#D4D4D4" />
+
+    <View
+        android:id="@+id/view3"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="12dp"
+        app:layout_constraintTop_toBottomOf="@id/tv_class"
+        android:background="#D4D4D4" />
 
     <TextView
         android:id="@+id/textViewStatusInp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
         android:text="Status: Idle"
         app:layout_constraintStart_toStartOf="@+id/textViewReceived2"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/lottie_receiving" />
 
     <TextView
         android:id="@+id/textViewReceived2"
@@ -33,18 +163,43 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="30dp"
         android:text="Received:"
-        app:layout_constraintStart_toStartOf="@+id/buttonToggleCapture"
+        app:layout_constraintStart_toStartOf="@+id/lottie_receiving"
         app:layout_constraintTop_toBottomOf="@+id/textViewStatusInp" />
 
     <TextView
         android:id="@+id/textViewReceived"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
+        app:layout_constraintBottom_toBottomOf="@id/textViewReceived2"
         app:layout_constraintStart_toEndOf="@id/textViewReceived2"
         app:layout_constraintTop_toTopOf="@id/textViewReceived2"
-        app:layout_constraintBottom_toBottomOf="@id/textViewReceived2"
-        app:layout_goneMarginStart="4dp"
-        android:layout_marginStart="4dp" />
+        app:layout_goneMarginStart="4dp" />
+
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/lottie_receiving"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/view2"
+        app:lottie_autoPlay="false"
+        app:lottie_loop="true"
+        app:lottie_progress="0.33"
+        app:lottie_rawRes="@raw/receiving" />
+
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/lottie_checked"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/view2"
+        app:lottie_autoPlay="false"
+        app:lottie_rawRes="@raw/check" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
