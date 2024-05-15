@@ -1,5 +1,6 @@
 package com.example.ggwave;
 
+import android.annotation.SuppressLint;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.media.AudioFormat;
@@ -42,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_RECORD_AUDIO = 13;
 
     // TODO : BASE URL
-    private static final String BASE_URL = "http://";
+    private static final String BASE_URL = "http://15.165.236.170:5000/student/";
     private OkHttpClient client;
     private Retrofit retrofit;
     private ServerApi api;
@@ -52,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
     private native void processCaptureData(short[] data);
     private native void sendMessage(String message);
 
-    // Native callbacks:
+    private boolean isChecked = false;
     private void onNativeReceivedMessage(byte c_message[]) {
 
         /*double[] doubleArray = convertByteArrayToDouble(c_message);
@@ -62,6 +63,8 @@ public class MainActivity extends AppCompatActivity {
         Log.v("ggwave", "Received message: " + message);*/
         String message = new String(c_message);
 
+        if(isChecked)
+            return;
         if(api != null) {
             api.postDecodedKey(new KeyReq(message, studentId)).enqueue(new Callback<AttendanceDTO>() {
                 @Override
@@ -70,27 +73,22 @@ public class MainActivity extends AppCompatActivity {
                         if (response.body() != null) {
                             if (response.body().getLecture() != null) {
                                 AttendanceDTO attendance = response.body();
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        Toast.makeText(MainActivity.this, "출석 처리되었습니다.", Toast.LENGTH_SHORT).show();
-                                        binding.lottieReceiving.setVisibility(View.INVISIBLE);
-                                        binding.lottieChecked.setVisibility(View.VISIBLE);
-                                        binding.lottieChecked.playAnimation();
+                                runOnUiThread(() -> {
+                                    Toast.makeText(MainActivity.this, "출석 처리되었습니다.", Toast.LENGTH_SHORT).show();
+                                    binding.lottieReceiving.setVisibility(View.INVISIBLE);
+                                    binding.lottieChecked.setVisibility(View.VISIBLE);
+                                    binding.lottieChecked.playAnimation();
 
-                                        binding.tvClass.setText(attendance.getLecture());
-                                        binding.tvDate.setText(attendance.getAttendedAt());
-                                        binding.tvIsChecked.setText("Y");
-                                    }
+                                    binding.tvClass.setText(attendance.getLecture());
+                                    binding.tvDate.setText(attendance.getAttendedAt());
+                                    binding.tvIsChecked.setText("Y");
+                                    isChecked = true;
                                 });
                             }
                             else
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        Toast.makeText(MainActivity.this, "출석 실패하였습니다.", Toast.LENGTH_SHORT).show();
-                                        binding.tvIsChecked.setText("N");
-                                    }
+                                runOnUiThread(() -> {
+                                    Toast.makeText(MainActivity.this, "출석 실패하였습니다.", Toast.LENGTH_SHORT).show();
+                                    binding.tvIsChecked.setText("N");
                                 });
                         }
                     } else {
@@ -105,25 +103,20 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         } else {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Log.d("ggwave", "api is null");
-                    binding.lottieReceiving.setVisibility(View.INVISIBLE);
-                    binding.lottieChecked.setVisibility(View.VISIBLE);
-                    binding.lottieChecked.playAnimation();
+            runOnUiThread(() -> {
+                Log.d("ggwave", "api is null");
+                binding.lottieReceiving.setVisibility(View.INVISIBLE);
+                binding.lottieChecked.setVisibility(View.VISIBLE);
+                binding.lottieChecked.playAnimation();
 
-                }
             });
         }
 
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mCapturingThread.stopCapturing();
-                binding.textViewStatusInp.setText("Status: Idle");
-                binding.textViewReceived.setText(message);
-            }
+        runOnUiThread(() -> {
+            mCapturingThread.stopCapturing();
+            binding.textViewStatusInp.setText("Status: Idle");
+            //binding.textViewReceived.setText(stringToBits(message));
+            binding.textViewReceived.setText(message);
         });
     }
 
@@ -151,6 +144,7 @@ public class MainActivity extends AppCompatActivity {
         System.loadLibrary("test-cpp");
         initNative();
         initRTNR();
+        initCheckResult();
         //initRetrofitApi();
 
         mCapturingThread = new CapturingThread(new AudioDataReceivedListener() {
@@ -255,6 +249,16 @@ public class MainActivity extends AppCompatActivity {
         return doubleArray;
     }
 
+    public String stringToBits(String input) {
+        StringBuilder binary = new StringBuilder();
+        for (char c : input.toCharArray()) {
+            String binaryString = Integer.toBinaryString(c);
+            binary.append(String.format("%8s", binaryString).replace(' ', '0'));
+            binary.append("\n");
+        }
+        return binary.toString();
+    }
+
     void initRTNR(){
         try {
             rtNoiseReducer = new RtNoiseReducer(this);
@@ -285,6 +289,13 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return byteArray;
+    }
+
+    public void initCheckResult() {
+        binding.btnCheckResult.setOnClickListener( v -> {
+
+            }
+        );
     }
 }
 
