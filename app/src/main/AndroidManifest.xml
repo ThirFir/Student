@@ -13,8 +13,11 @@
         android:theme="@style/Theme.ggwave"
         android:usesCleartextTraffic="true">
         <activity
+            android:name=".ResultActivity"
+            android:exported="false" />
+        <activity
             android:name=".LoginActivity"
-            android:exported="true" >
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

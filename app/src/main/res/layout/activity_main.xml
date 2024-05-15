@@ -171,7 +171,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="4dp"
-        app:layout_constraintBottom_toBottomOf="@id/textViewReceived2"
         app:layout_constraintStart_toEndOf="@id/textViewReceived2"
         app:layout_constraintTop_toTopOf="@id/textViewReceived2"
         app:layout_goneMarginStart="4dp" />
@@ -188,6 +187,14 @@
         app:lottie_loop="true"
         app:lottie_progress="0.33"
         app:lottie_rawRes="@raw/receiving" />
+
+    <Button
+        android:id="@+id/btn_check_result"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Check Result"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <com.airbnb.lottie.LottieAnimationView
         android:id="@+id/lottie_checked"
