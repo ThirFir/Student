@@ -12,9 +12,8 @@ public class ResultActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        binding = ActivityResultBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-
-
     }
 }
 

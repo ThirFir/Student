@@ -1,7 +1,7 @@
 package com.example.ggwave;
 
-import android.annotation.SuppressLint;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.AudioFormat;
 import android.media.AudioManager;
@@ -48,24 +48,25 @@ public class MainActivity extends AppCompatActivity {
     private Retrofit retrofit;
     private ServerApi api;
 
+    private AttendanceResultAdapter mAdapter;
+    private List<>
+
     // Native interface:
     private native void initNative();
+
     private native void processCaptureData(short[] data);
+
     private native void sendMessage(String message);
 
     private boolean isChecked = false;
+
     private void onNativeReceivedMessage(byte c_message[]) {
-
-        /*double[] doubleArray = convertByteArrayToDouble(c_message);
-        double[] se_out = rtNoiseReducer.audioSE(doubleArray);
-        byte[] byteArray = convertDoubleArrayToByteArray(se_out);
-        String message = new String(byteArray);
-        Log.v("ggwave", "Received message: " + message);*/
         String message = new String(c_message);
+        Log.d("dhk", "Received Message: " + message);
 
-        if(isChecked)
+        if (isChecked)
             return;
-        if(api != null) {
+        if (api != null) {
             api.postDecodedKey(new KeyReq(message, studentId)).enqueue(new Callback<AttendanceDTO>() {
                 @Override
                 public void onResponse(@NonNull Call<AttendanceDTO> call, @NonNull Response<AttendanceDTO> response) {
@@ -84,8 +85,7 @@ public class MainActivity extends AppCompatActivity {
                                     binding.tvIsChecked.setText("Y");
                                     isChecked = true;
                                 });
-                            }
-                            else
+                            } else
                                 runOnUiThread(() -> {
                                     Toast.makeText(MainActivity.this, "출석 실패하였습니다.", Toast.LENGTH_SHORT).show();
                                     binding.tvIsChecked.setText("N");
@@ -128,6 +128,7 @@ public class MainActivity extends AppCompatActivity {
             public void onProgress(int progress) {
                 // todo : progress updates
             }
+
             @Override
             public void onCompletion() {
                 mPlaybackThread.stopPlayback();
@@ -140,6 +141,16 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        mAdapter = new AttendanceResultAdapter(getBaseContext());
+
+        binding.lottieStudy.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, ResultActivity.class);
+                startActivity(intent);
+            }
+        });
 
         System.loadLibrary("test-cpp");
         initNative();
@@ -259,7 +270,7 @@ public class MainActivity extends AppCompatActivity {
         return binary.toString();
     }
 
-    void initRTNR(){
+    void initRTNR() {
         try {
             rtNoiseReducer = new RtNoiseReducer(this);
         } catch (IOException e) {
@@ -292,9 +303,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void initCheckResult() {
-        binding.btnCheckResult.setOnClickListener( v -> {
+        binding.btnCheckResult.setOnClickListener(v -> {
 
-            }
+                }
         );
     }
 }
@@ -353,7 +364,7 @@ class CapturingThread {
         if (bufferSize == AudioRecord.ERROR || bufferSize == AudioRecord.ERROR_BAD_VALUE) {
             bufferSize = SAMPLE_RATE * 2;
         }
-        bufferSize = 4*1024;
+        bufferSize = 4 * 1024;
 
         short[] audioBuffer = new short[bufferSize / 2];
 
@@ -391,6 +402,7 @@ class CapturingThread {
 
 interface PlaybackListener {
     void onProgress(int progress);
+
     void onCompletion();
 }
 
@@ -444,7 +456,7 @@ class PlaybackThread {
             bufferSize = SAMPLE_RATE * 2;
         }
 
-        bufferSize = 16*1024;
+        bufferSize = 16 * 1024;
 
         AudioTrack audioTrack = new AudioTrack(
                 AudioManager.STREAM_MUSIC,
@@ -461,6 +473,7 @@ class PlaybackThread {
                     mListener.onProgress((track.getPlaybackHeadPosition() * 1000) / SAMPLE_RATE);
                 }
             }
+
             @Override
             public void onMarkerReached(AudioTrack track) {
                 Log.v(LOG_TAG, "Audio file end reached");
@@ -488,7 +501,7 @@ class PlaybackThread {
                 mSamples.get(buffer);
                 samplesToWrite = buffer.length;
             } else {
-                for(int i = numSamplesLeft; i < buffer.length; i++) {
+                for (int i = numSamplesLeft; i < buffer.length; i++) {
                     buffer[i] = 0;
                 }
                 mSamples.get(buffer, 0, numSamplesLeft);
