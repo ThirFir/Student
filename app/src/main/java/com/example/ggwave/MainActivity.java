@@ -1,7 +1,6 @@
 package com.example.ggwave;
 
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.AudioFormat;
 import android.media.AudioManager;
@@ -18,11 +17,13 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.example.ggwave.databinding.ActivityMainBinding;
 
 import java.io.IOException;
 import java.nio.ShortBuffer;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import okhttp3.OkHttpClient;
@@ -49,7 +50,10 @@ public class MainActivity extends AppCompatActivity {
     private ServerApi api;
 
     private AttendanceResultAdapter mAdapter;
-    private List<>
+    private ReceivedAdapter mReceivedAdapter;
+    private NAdapter mNAdapter;
+    private List<Integer> nList;
+    private List<String> receivedList;
 
     // Native interface:
     private native void initNative();
@@ -76,19 +80,20 @@ public class MainActivity extends AppCompatActivity {
                                 AttendanceDTO attendance = response.body();
                                 runOnUiThread(() -> {
                                     Toast.makeText(MainActivity.this, "출석 처리되었습니다.", Toast.LENGTH_SHORT).show();
+                                    nList.add(nList.size() + 1);
+                                    receivedList.add(message);
+                                    mNAdapter.submitList(nList);
+                                    mReceivedAdapter.submitList(receivedList);
+                                    
                                     binding.lottieReceiving.setVisibility(View.INVISIBLE);
                                     binding.lottieChecked.setVisibility(View.VISIBLE);
                                     binding.lottieChecked.playAnimation();
 
-                                    binding.tvClass.setText(attendance.getLecture());
-                                    binding.tvDate.setText(attendance.getAttendedAt());
-                                    binding.tvIsChecked.setText("Y");
                                     isChecked = true;
                                 });
                             } else
                                 runOnUiThread(() -> {
                                     Toast.makeText(MainActivity.this, "출석 실패하였습니다.", Toast.LENGTH_SHORT).show();
-                                    binding.tvIsChecked.setText("N");
                                 });
                         }
                     } else {
@@ -116,7 +121,6 @@ public class MainActivity extends AppCompatActivity {
             mCapturingThread.stopCapturing();
             binding.textViewStatusInp.setText("Status: Idle");
             //binding.textViewReceived.setText(stringToBits(message));
-            binding.textViewReceived.setText(message);
         });
     }
 
@@ -143,14 +147,12 @@ public class MainActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         mAdapter = new AttendanceResultAdapter(getBaseContext());
-
-        binding.lottieStudy.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, ResultActivity.class);
-                startActivity(intent);
-            }
-        });
+        mReceivedAdapter = new ReceivedAdapter();
+        mNAdapter = new NAdapter();
+        binding.rvN.setAdapter(mNAdapter);
+        binding.rvString.setAdapter(mReceivedAdapter);
+        binding.rvN.setLayoutManager(new LinearLayoutManager(this));
+        binding.rvString.setLayoutManager(new LinearLayoutManager(this));
 
         System.loadLibrary("test-cpp");
         initNative();
@@ -171,14 +173,10 @@ public class MainActivity extends AppCompatActivity {
                 startAudioCapturingSafe();
                 binding.lottieReceiving.playAnimation();
                 binding.lottieReceiving.setProgress(0.33f);
-                binding.textViewStatusInp.setText("Status: Capturing");
-                binding.textViewReceived.setText("");
             } else {
                 mCapturingThread.stopCapturing();
                 binding.lottieReceiving.cancelAnimation();
                 binding.lottieReceiving.setProgress(0.33f);
-                binding.textViewStatusInp.setText("Status: Idle");
-                binding.textViewReceived.setText("");
             }
         });
     }
