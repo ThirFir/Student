@@ -1,5 +1,6 @@
 package com.example.ggwave;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
@@ -35,18 +36,19 @@ public class NAdapter extends ListAdapter<Integer, RecyclerView.ViewHolder> {
 
         public void bind(Integer n) {
             mBinding.tvNValue.setText(String.valueOf(n));
+            Log.d("NAdapter", "bind: " + n);
         }
     }
 
     static DiffUtil.ItemCallback<Integer> diffCallback = new DiffUtil.ItemCallback<Integer>() {
         @Override
         public boolean areItemsTheSame(@NonNull Integer oldItem, @NonNull Integer newItem) {
-            return oldItem.intValue() == newItem.intValue();
+            return false;
         }
 
         @Override
         public boolean areContentsTheSame(@NonNull Integer oldItem, @NonNull Integer newItem) {
-            return oldItem.equals(newItem);
+            return false;
         }
     };
 }

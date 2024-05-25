@@ -73,31 +73,33 @@
         android:id="@+id/tv_string"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="80dp"
         android:text="수신 문자열"
         android:textSize="15sp"
         android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="@id/rv_string"
         app:layout_constraintBottom_toBottomOf="@+id/tv_n"
-        app:layout_constraintStart_toEndOf="@id/tv_n"
+        app:layout_constraintStart_toStartOf="@id/rv_string"
         app:layout_constraintTop_toTopOf="@+id/tv_n"
         app:layout_constraintVertical_bias="0.0" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_n"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:layout_marginTop="8dp"
         app:layout_constraintEnd_toEndOf="@+id/tv_n"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="@+id/tv_n"
         app:layout_constraintTop_toBottomOf="@id/tv_n" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_string"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:layout_marginTop="8dp"
-        app:layout_constraintEnd_toEndOf="@+id/tv_string"
-        app:layout_constraintStart_toStartOf="@+id/tv_string"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/rv_n"
         app:layout_constraintTop_toBottomOf="@id/tv_string" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

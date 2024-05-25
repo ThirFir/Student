@@ -23,6 +23,7 @@ import com.example.ggwave.databinding.ActivityMainBinding;
 
 import java.io.IOException;
 import java.nio.ShortBuffer;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -52,8 +53,8 @@ public class MainActivity extends AppCompatActivity {
     private AttendanceResultAdapter mAdapter;
     private ReceivedAdapter mReceivedAdapter;
     private NAdapter mNAdapter;
-    private List<Integer> nList;
-    private List<String> receivedList;
+    private List<Integer> nList = new ArrayList<>();
+    private List<String> receivedList = new ArrayList<>();
 
     // Native interface:
     private native void initNative();
@@ -109,7 +110,15 @@ public class MainActivity extends AppCompatActivity {
             });
         } else {
             runOnUiThread(() -> {
-                Log.d("ggwave", "api is null");
+                //Log.d("ggwave", nList.toString());
+                List<Integer> nList2 = new ArrayList<>(nList);
+                List<String> receivedList2 = new ArrayList<>(receivedList);
+                nList.add(nList.size() + 1);
+                nList2.add(nList2.size() + 1);
+                receivedList.add(message);
+                receivedList2.add(message);
+                mNAdapter.submitList(nList2);
+                mReceivedAdapter.submitList(receivedList2);
                 binding.lottieReceiving.setVisibility(View.INVISIBLE);
                 binding.lottieChecked.setVisibility(View.VISIBLE);
                 binding.lottieChecked.playAnimation();
@@ -118,12 +127,28 @@ public class MainActivity extends AppCompatActivity {
         }
 
         runOnUiThread(() -> {
-            mCapturingThread.stopCapturing();
+            if(nList.size() == 30)
+                mCapturingThread.stopCapturing();
             binding.textViewStatusInp.setText("Status: Idle");
             //binding.textViewReceived.setText(stringToBits(message));
         });
     }
-
+    public String stringToBits(String input) {
+        StringBuilder binary = new StringBuilder();
+        int count = 0;
+        for (char c : input.toCharArray()) {
+            String binaryString = Integer.toBinaryString(c);
+            binary.append(String.format("%16s", binaryString).replace(' ', '0'));
+            count += 16;
+            if (count % 32 == 0) {
+                binary.append("\n");
+                count = 0;
+            } else if (count % 16 == 0) {
+                binary.append(" ");
+            }
+        }
+        return binary.toString();
+    }
     private void onNativeMessageEncoded(short c_message[]) {
         Log.v("ggwave", "Playing encoded message ..");
 
@@ -256,16 +281,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return doubleArray;
-    }
-
-    public String stringToBits(String input) {
-        StringBuilder binary = new StringBuilder();
-        for (char c : input.toCharArray()) {
-            String binaryString = Integer.toBinaryString(c);
-            binary.append(String.format("%8s", binaryString).replace(' ', '0'));
-            binary.append("\n");
-        }
-        return binary.toString();
     }
 
     void initRTNR() {
